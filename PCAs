@@ -1,0 +1,128 @@
+Explanation:
+Extract DNA Information: The extract_dna_info function reads the VCF file and extracts relevant information into a DataFrame.
+Plot SNP Distribution: The plot_snp_distribution function creates a bar plot showing the number of SNPs per chromosome.
+Perform PCA: The perform_pca function standardizes the data and performs PCA, returning the principal components and PCA model.
+Plot PCA Results: The plot_pca_results function creates scatter plots for PC1 vs PC2, PC1 vs PC3, and PC2 vs PC3, with points colored based on hypothetical labels.
+Main Function: The main function integrates these steps. It extracts DNA information, plots SNP distribution, generates synthetic SNP data for demonstration, performs PCA, and plots the PCA results.
+
+import pandas as pd
+import vcfpy
+import matplotlib.pyplot as plt
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+
+def extract_dna_info(vcf_file):
+    # Create a VCF reader
+    vcf_reader = vcfpy.Reader.from_path(vcf_file)
+
+    # Create a list to store the DNA information
+    dna_info = []
+
+    # Iterate over each record in the VCF file
+    for record in vcf_reader:
+        chrom = record.CHROM
+        pos = record.POS
+        ref = record.REF
+        alts = [alt.value for alt in record.ALT]
+        info = record.INFO
+
+        # Append the extracted information to the list
+        dna_info.append({
+            'Chromosome': chrom,
+            'Position': pos,
+            'Reference': ref,
+            'Alternates': alts,
+            'Info': info
+        })
+
+    # Convert the list to a DataFrame for better visualization
+    df = pd.DataFrame(dna_info)
+    return df
+
+def plot_snp_distribution(df, title):
+    plt.figure(figsize=(10, 6))
+    df['Chromosome'].value_counts().sort_index().plot(kind='bar')
+    plt.title(title)
+    plt.xlabel('Chromosome')
+    plt.ylabel('Number of SNPs')
+    plt.show()
+
+def perform_pca(data):
+    # Standardize the data
+    scaler = StandardScaler()
+    data_scaled = scaler.fit_transform(data)
+
+    # Perform PCA
+    pca = PCA(n_components=3)
+    principal_components = pca.fit_transform(data_scaled)
+
+    return principal_components, pca
+
+def plot_pca_results(pca_df):
+    labels = pca_df['Label'].unique()
+
+    # Plot PC1 vs PC2
+    plt.figure(figsize=(10, 6))
+    for label in labels:
+        subset = pca_df[pca_df['Label'] == label]
+        plt.scatter(subset['PC1'], subset['PC2'], label=label, alpha=0.7)
+    plt.xlabel('PC1')
+    plt.ylabel('PC2')
+    plt.title('PCA: PC1 vs PC2')
+    plt.legend()
+    plt.show()
+
+    # Plot PC1 vs PC3
+    plt.figure(figsize=(10, 6))
+    for label in labels:
+        subset = pca_df[pca_df['Label'] == label]
+        plt.scatter(subset['PC1'], subset['PC3'], label=label, alpha=0.7)
+    plt.xlabel('PC1')
+    plt.ylabel('PC3')
+    plt.title('PCA: PC1 vs PC3')
+    plt.legend()
+    plt.show()
+
+    # Plot PC2 vs PC3
+    plt.figure(figsize=(10, 6))
+    for label in labels:
+        subset = pca_df[pca_df['Label'] == label]
+        plt.scatter(subset['PC2'], subset['PC3'], label=label, alpha=0.7)
+    plt.xlabel('PC2')
+    plt.ylabel('PC3')
+    plt.title('PCA: PC2 vs PC3')
+    plt.legend()
+    plt.show()
+
+def main():
+    vcf_file = 'example.vcf'  # Replace with your VCF file path
+
+    # Extract DNA information
+    df = extract_dna_info(vcf_file)
+
+    # Print the extracted information
+    print(df.head())
+
+    # Plot SNP distribution across chromosomes
+    plot_snp_distribution(df, 'SNP Distribution across Chromosomes')
+
+    # Here, we'll assume the SNP data is in a suitable format
+    # For demonstration, we'll generate synthetic SNP data
+    # You should replace this with actual SNP data from the extracted dataframe
+    data = np.random.rand(len(df), 1000)  # Replace this with actual SNP data
+
+    # Perform PCA
+    principal_components, pca = perform_pca(data)
+
+    # Create a DataFrame with PCA results
+    pca_df = pd.DataFrame(data=principal_components, columns=['PC1', 'PC2', 'PC3'])
+
+    # Assign hypothetical labels for coloring the plot
+    labels = np.random.choice(['North Atlantic', 'Mediterranean', 'Archaeological'], size=len(df))
+    pca_df['Label'] = labels
+
+    # Plot PCA results
+    plot_pca_results(pca_df)
+
+if __name__ == "__main__":
+    main()
